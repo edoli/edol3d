@@ -6,9 +6,10 @@ from OpenGL.GL import *
 from gl.mesh import Mesh
 
 class RenderView:
-    def __init__(self, width, height):
+    def __init__(self, width, height, shader):
         self.width = width
         self.height = height
+        self.shader = shader
         self.image_callback = None
 
         self.fbo = glGenFramebuffers(1)
@@ -38,16 +39,18 @@ class RenderView:
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        glUseProgram(self.shader)
+
         for mesh in meshes:
             if not mesh.is_visible:
                 continue
             
+            mesh.bind_shader(self.shader)
+
             for i, texture in enumerate(mesh.textures):
                 if texture is not None:
                     glActiveTexture(GL_TEXTURE0 + i)
                     glBindTexture(texture.target, texture.texture)
-
-            glUseProgram(mesh.shader)
 
             glBindVertexArray(mesh.vao)
             glDrawElements(GL_TRIANGLES, mesh.faces_size, mesh.face_type, None)

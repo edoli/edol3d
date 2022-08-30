@@ -28,9 +28,13 @@ class Mesh():
         self.faces = faces
         self.textures = textures
 
+        self.vertices -= vertices.mean(axis=0, keepdims=True)
+        self.vertices[:, 2] -= 3
+
         self.center = vertices.mean(axis=0)
         self.bbox = np.stack([vertices.min(axis=0), vertices.max(axis=0)])
         self.is_visible = True
+        self.binded_buffer = {}
 
         if vertices.dtype != np.float32:
             raise Error('vertices should be float32 type ndarray')
@@ -61,34 +65,47 @@ class Mesh():
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.nbytes, faces, GL_STATIC_DRAW)
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(0)
-
-    def bind_shader(self, shader):
         vertex_attribs = self.data.vertex_attribs
 
         if vertex_attribs is not None:
             for key in vertex_attribs:
-                self.bind_data(shader, key, vertex_attribs[key])
+                self.bind_data(key, vertex_attribs[key])
 
-    def bind_data(self, shader, name, data):    
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindVertexArray(0)
+
+    def bind_shader(self, shader):
+        glBindVertexArray(self.vao)
+        vertex_attribs = self.data.vertex_attribs
+
+        if vertex_attribs is not None:
+            for name in vertex_attribs:
+                gl_location = glGetAttribLocation(shader, name)
+
+                if gl_location != -1:
+                    data = vertex_attribs[name]
+                    glBindBuffer(GL_ARRAY_BUFFER, self.binded_buffer[name])
+
+                    if len(data.shape) == 1:
+                        data_size = 1
+                    else:
+                        data_size = data.shape[1]
+
+                    glEnableVertexAttribArray(gl_location)
+                    glVertexAttribPointer(gl_location, data_size, GL_FLOAT, GL_FALSE,
+                                        data.dtype.itemsize * data_size, ctypes.c_void_p(0))
+                else:
+                    print('GL attrib not exists: ', name)
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindVertexArray(0)
+
+    def bind_data(self, name, data):    
+        if data.dtype != np.float32:
+            raise Error('data should be float32 type ndarray')
+
         vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
 
-        gl_location = glGetAttribLocation(shader, name)
-
-        if gl_location != -1:
-            if data.dtype != np.float32:
-                raise Error('data should be float32 type ndarray')
-
-            if len(data.shape) == 1:
-                data_size = 1
-            else:
-                data_size = data.shape[1]
-
-            glEnableVertexAttribArray(gl_location)
-            glVertexAttribPointer(gl_location, data_size, GL_FLOAT, GL_FALSE,
-                                data.dtype.itemsize * data_size, ctypes.c_void_p(0))
-        else:
-            print('GL attrib not exists: ', name)
+        self.binded_buffer[name] = vbo

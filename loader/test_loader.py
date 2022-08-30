@@ -16,7 +16,7 @@ def prepare(shader, path) -> Mesh:
     vertices = np.transpose(vertices)
     
     rho = obj_mat['meshCurrent']['rho'][0, 0]
-    rho = np.float32(np.transpose(rho))
+    rho = np.float32(np.transpose(rho)) / 16
 
     normal = obj_mat['meshCurrent']['normals'][0, 0]
     normal = np.float32(np.transpose(normal))
