@@ -6,28 +6,30 @@ from OpenGL.GL.shaders import ShaderProgram
 
 
 class Texture():
-    def __init__(self, texture, texture_type):
+    def __init__(self, texture, target):
         self.texture = texture
-        self.texture_type = texture_type
+        self.target = target
 
 
 class MeshData():
-    def __init__(self, vertices: np.ndarray, faces: np.ndarray, extra=None):
+    def __init__(self, vertices: np.ndarray, faces: np.ndarray, vertex_attribs=None, face_attribs=None):
         self.vertices = vertices
         self.faces = faces
-        self.extra = extra
+        self.vertex_attribs = vertex_attribs
+        self.face_attribs = face_attribs
 
 class Mesh():
-    def __init__(self, data: MeshData, shader: ShaderProgram, textures: List[Texture] = []):
+    def __init__(self, data: MeshData, textures: List[Texture] = []):
         self.data = data
         vertices = data.vertices
         faces = data.faces
-        extra = data.extra
 
         self.vertices = vertices
         self.faces = faces
         self.textures = textures
 
+        self.center = vertices.mean(axis=0)
+        self.bbox = np.stack([vertices.min(axis=0), vertices.max(axis=0)])
         self.is_visible = True
 
         if vertices.dtype != np.float32:
@@ -44,35 +46,37 @@ class Mesh():
             raise Error('faces should be uint8 or uint16 or uint32 type ndarray')
 
         self.faces_size = faces.size
-        self.shader = shader
 
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
 
-        vbo = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        self.vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertices.dtype.itemsize * 3, ctypes.c_void_p(0))
 
-        ebo = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+        self.ebo = glGenBuffers(1)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.nbytes, faces, GL_STATIC_DRAW)
-
-        if extra is not None:
-            for key in extra:
-                self.bind_data(key, extra[key])
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
-    def bind_data(self, name, data):    
+    def bind_shader(self, shader):
+        vertex_attribs = self.data.vertex_attribs
+
+        if vertex_attribs is not None:
+            for key in vertex_attribs:
+                self.bind_data(shader, key, vertex_attribs[key])
+
+    def bind_data(self, shader, name, data):    
         vbo = glGenBuffers(1)
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
 
-        gl_location = glGetAttribLocation(self.shader, name)
+        gl_location = glGetAttribLocation(shader, name)
 
         if gl_location != -1:
             if data.dtype != np.float32:
