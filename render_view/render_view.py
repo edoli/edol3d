@@ -11,25 +11,11 @@ class RenderView:
         self.height = height
         self.shader = shader
         self.image_callback = None
+        self.attrib = None
 
         self.fbo = glGenFramebuffers(1)
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
-
-        self.rbo = glGenRenderbuffers(1)
-        glBindRenderbuffer(GL_RENDERBUFFER, self.rbo)
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height)
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, self.rbo)
-        
-        self.fbo_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.fbo_texture)
-        
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, None)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)  
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.fbo_texture, 0)
-
+        self.generate_fbo_buffer()
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def draw(self, meshes: List[Mesh]):
@@ -42,10 +28,10 @@ class RenderView:
         glUseProgram(self.shader)
 
         for mesh in meshes:
-            if not mesh.is_visible:
+            if not mesh.is_visible and self.attrib is None:
                 continue
             
-            mesh.bind_shader_rgb(self.shader, 'rho')
+            mesh.bind_shader_rgb(self.shader, self.attrib)
 
             for i, texture in enumerate(mesh.textures):
                 if texture is not None:
@@ -62,3 +48,29 @@ class RenderView:
             img_data = np.frombuffer(img_data, dtype=np.float32)
             img_data = np.reshape(img_data, (self.height, self.width, 3))[::-1, :, :]
             self.image_callback(img_data)
+
+    def resize(self, width, height):
+        if width == self.width and height == self.height:
+            return
+
+        self.width = width
+        self.height = height
+
+        glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
+        self.generate_fbo_buffer()
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def generate_fbo_buffer(self):
+        self.fbo_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.fbo_texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, self.width, self.height, 0, GL_RGB, GL_FLOAT, None)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)  
+        
+        self.fbo_depth = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.fbo_depth)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, self.width, self.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, self.fbo_texture, 0)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.fbo_depth, 0)

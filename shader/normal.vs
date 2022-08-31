@@ -9,5 +9,5 @@ out vec4 vColor;
 void main()
 {
     gl_Position = u_mvp * vec4(position, 1.0);
-	vColor = vec4(value, 1.0);
+	vColor = vec4((value + 1.0) / 2.0, 1.0);
 }

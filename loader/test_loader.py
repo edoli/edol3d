@@ -7,9 +7,7 @@ from scipy import io as sio
 from gl.mesh import Mesh, MeshData
 
 
-def prepare(shader, path) -> Mesh:
-    glUseProgram(shader)
-
+def prepare(path) -> Mesh:
     obj_mat = sio.loadmat(path)
     vertices = obj_mat['meshCurrent']['vertices'][0, 0]
     vertices = np.transpose(vertices)
@@ -22,6 +20,7 @@ def prepare(shader, path) -> Mesh:
 
     eta = obj_mat['meshCurrent']['eta'][0, 0]
     eta = np.float32(np.transpose(eta))
+    eta = (eta - eta.min()) / (eta.max() - eta.min())
 
     m1 = obj_mat['meshCurrent']['m1'][0, 0]
     m1 = np.float32(np.transpose(m1))
