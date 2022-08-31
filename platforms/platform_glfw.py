@@ -1,16 +1,18 @@
 import glfw
 from OpenGL.GL import *
 
-class PlatformGLFW():
-    def __init__(self, init_width, init_height):
-        self.width = init_width
-        self.height = init_height
+from platforms.platform import Platform
+
+class PlatformGLFW(Platform):
+    def init(self):
+        self.last_mouse_x = 0
+        self.last_mouse_y = 0
 
         if not glfw.init():
             return
                 
         glfw.window_hint(glfw.SAMPLES, 4)
-        self.window = glfw.create_window(self.width, self.height, "Render", None, None)
+        self.window = glfw.create_window(self.view.width, self.view.height, "Render", None, None)
         
         if not self.window:
             glfw.terminate()
@@ -18,6 +20,7 @@ class PlatformGLFW():
         
         glfw.make_context_current(self.window)
         glfw.set_window_size_callback(self.window, self.window_size_callback)
+        glfw.set_cursor_pos_callback(self.window, self.cursor_pos_callback)
 
     def loop_prepare(self):
         glfw.poll_events()
@@ -32,5 +35,14 @@ class PlatformGLFW():
         glfw.terminate()
 
     def window_size_callback(self, window, width, height):
-        self.width = width
-        self.height = height
+        self.view.width = width
+        self.view.height = height
+
+    def cursor_pos_callback(self, window, xpos, ypos):
+        if glfw.get_mouse_button(window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS:
+            delta_x = xpos - self.last_mouse_x
+            delta_y = ypos - self.last_mouse_y
+
+            
+        self.last_mouse_x = xpos
+        self.last_mouse_y = ypos

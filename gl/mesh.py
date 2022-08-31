@@ -29,7 +29,6 @@ class Mesh():
         self.textures = textures
 
         self.vertices -= vertices.mean(axis=0, keepdims=True)
-        self.vertices[:, 2] -= 3
 
         self.center = vertices.mean(axis=0)
         self.bbox = np.stack([vertices.min(axis=0), vertices.max(axis=0)])
@@ -74,6 +73,16 @@ class Mesh():
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
+    def bind_data(self, name, data):    
+        if data.dtype != np.float32:
+            raise Error('data should be float32 type ndarray')
+
+        vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
+
+        self.binded_buffer[name] = vbo
+
     def bind_shader(self, shader):
         glBindVertexArray(self.vao)
         vertex_attribs = self.data.vertex_attribs
@@ -100,12 +109,27 @@ class Mesh():
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
-    def bind_data(self, name, data):    
-        if data.dtype != np.float32:
-            raise Error('data should be float32 type ndarray')
+    def bind_shader_rgb(self, shader, name):
+        glBindVertexArray(self.vao)
+        vertex_attribs = self.data.vertex_attribs
 
-        vbo = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, data.nbytes, data, GL_STATIC_DRAW)
+        if vertex_attribs is not None:
+            gl_location = glGetAttribLocation(shader, 'value')
 
-        self.binded_buffer[name] = vbo
+            if gl_location != -1:
+                data = vertex_attribs[name]
+                glBindBuffer(GL_ARRAY_BUFFER, self.binded_buffer[name])
+
+                if len(data.shape) == 1:
+                    data_size = 1
+                else:
+                    data_size = data.shape[1]
+
+                glEnableVertexAttribArray(gl_location)
+                glVertexAttribPointer(gl_location, data_size, GL_FLOAT, GL_FALSE,
+                                    data.dtype.itemsize * data_size, ctypes.c_void_p(0))
+            else:
+                print('GL attrib not exists: ', name)
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glBindVertexArray(0)
