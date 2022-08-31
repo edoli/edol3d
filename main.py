@@ -1,5 +1,7 @@
 from turtle import width
 from typing import List
+import sys
+import time
 import numpy as np
 from OpenGL.GL import *
 from gl.camera_utils import look_at, perspective_fov
@@ -9,6 +11,7 @@ from gl.vector import vec3
 from platforms.platform_glfw import PlatformGLFW
 from platforms.view import View
 from render_view.render_view import RenderView
+
 
 def main():
     init_width = 640
@@ -21,17 +24,16 @@ def main():
     view.height = init_height
     view.num_column = 3
 
-    platform = PlatformGLFW(view)
-
+    render_views: List[RenderView] = []
+    platform = PlatformGLFW(view, render_views)
 
     rgb_shader = create_shader_program('color.vs', 'color.fs')
     normal_shader = create_shader_program('normal_view.vs', 'normal_view.fs')
     viridis_shader = create_shader_colormap_program('viridis')
     from loader import test_loader
     mesh = test_loader.prepare('tmp/meshCurrent.mat')
-    meshes = [mesh]
+    view.mesh = mesh
 
-    render_views: List[RenderView] = []
     render_view1 = RenderView(init_width, init_height, rgb_shader)
     render_view1.attrib = 'rho'
     render_view2 = RenderView(init_width, init_height, normal_shader)
@@ -44,25 +46,19 @@ def main():
     render_view5.attrib = 'eta'
     render_view6 = RenderView(init_width, init_height, viridis_shader)
     render_view6.attrib = 'eta'
-    render_view7 = RenderView(init_width, init_height, viridis_shader)
-    render_view7.attrib = 'eta'
-    render_view8 = RenderView(init_width, init_height, viridis_shader)
-    render_view8.attrib = 'eta'
-    render_view9 = RenderView(init_width, init_height, viridis_shader)
-    render_view9.attrib = 'eta'
     render_views.append(render_view1)
     render_views.append(render_view2)
     render_views.append(render_view3)
     render_views.append(render_view4)
     render_views.append(render_view5)
     render_views.append(render_view6)
-    render_views.append(render_view7)
-    render_views.append(render_view8)
-    render_views.append(render_view9)
 
-    import time
     while True:
         platform.loop_prepare()
+
+        if view.width == 0 or view.height == 0:
+            time.sleep(0.01)
+            continue
 
         glEnable(GL_MULTISAMPLE)
         glEnable(GL_DEPTH_TEST)
@@ -96,7 +92,7 @@ def main():
             glUniformMatrix3fv(glGetUniformLocation(render_view.shader, 'u_mvp_normal'), 1, GL_TRUE, mvp_normal_matrix)
 
             render_view.resize(cell_width, cell_height)
-            render_view.draw(meshes)
+            render_view.draw([view.mesh])
 
             dst_x = cell_width * col
             dst_y = cell_height * row
@@ -111,6 +107,7 @@ def main():
         if platform.should_close():
             platform.close()
             break
+
 
 if __name__ == '__main__':
     main()

@@ -31,7 +31,7 @@ class RenderView:
             if not mesh.is_visible and self.attrib is None:
                 continue
             
-            mesh.bind_shader_rgb(self.shader, self.attrib)
+            mesh.bind_shader(self.shader, self.attrib)
 
             for i, texture in enumerate(mesh.textures):
                 if texture is not None:

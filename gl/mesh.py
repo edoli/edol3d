@@ -109,11 +109,11 @@ class Mesh():
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
-    def bind_shader_rgb(self, shader, name):
+    def bind_shader(self, shader, name):
         glBindVertexArray(self.vao)
         vertex_attribs = self.data.vertex_attribs
 
-        if vertex_attribs is not None:
+        if vertex_attribs is not None and name is not None and name in vertex_attribs:
             gl_location = glGetAttribLocation(shader, 'value')
 
             if gl_location != -1:
