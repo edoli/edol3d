@@ -11,6 +11,7 @@ from gl.vector import vec3
 from platforms.platform_glfw import PlatformGLFW
 from platforms.view import View
 from render_view.render_view import RenderView
+from util.observable_list import ObservableList
 
 
 def main():
@@ -24,7 +25,7 @@ def main():
     view.height = init_height
     view.num_column = 3
 
-    render_views: List[RenderView] = []
+    render_views: List[RenderView] = ObservableList()
     platform = PlatformGLFW(view, render_views)
 
     rgb_shader = create_shader_program('color.vs', 'color.fs')

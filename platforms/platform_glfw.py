@@ -12,6 +12,7 @@ from gl.utils import create_shader_program
 from platforms.platform import Platform
 from platforms.view import View
 from render_view.render_view import RenderView
+from util.observable_list import ObservableList
 
 class PlatformGLFW(Platform):
     def init(self):
@@ -84,12 +85,14 @@ class PlatformGLFW(Platform):
 
 class ControlUI(QWidget):
 
-    def __init__(self, view: View, render_views: List[RenderView]):
+    def __init__(self, view: View, render_views: ObservableList[RenderView]):
         super().__init__()
 
         self.view = view
         self.render_views = render_views
         self.initUI()
+
+        self.render_views.subscribe(self.refresh_render_view_list)
 
 
     def initUI(self):
@@ -109,7 +112,7 @@ class ControlUI(QWidget):
         self.button_layout.addWidget(self.remove_button)
 
         self.render_view_list = QListWidget()
-        self.refresh_render_view_list()
+        self.refresh_render_view_list(self.render_views)
 
         self.layout = QVBoxLayout()
         self.layout.addLayout(self.button_layout)
@@ -119,10 +122,11 @@ class ControlUI(QWidget):
 
         self.show()
 
-    def refresh_render_view_list(self):
+
+    def refresh_render_view_list(self, render_views):
         self.render_view_list.clear()
 
-        for i, render_view in enumerate(self.render_views):
+        for i, render_view in enumerate(render_views):
             render_view_list_item = RenderViewListItem(i, self.view, render_view)
 
             item = QListWidgetItem(self.render_view_list)
@@ -134,7 +138,6 @@ class ControlUI(QWidget):
         rgb_shader = create_shader_program('color.vs', 'color.fs')
         render_view = RenderView(0, 0, rgb_shader)
         self.render_views.append(render_view)
-        self.refresh_render_view_list()
 
     def remove_render_view(self):
         index = self.render_view_list.currentRow()
@@ -142,7 +145,6 @@ class ControlUI(QWidget):
             return
             
         self.render_views.pop(index)
-        self.refresh_render_view_list()
 
 
 class RenderViewListItem(QWidget):
