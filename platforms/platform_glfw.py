@@ -7,12 +7,12 @@ from OpenGL.GL import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from gl.utils import create_shader_program
 
 from platforms.platform import Platform
 from platforms.view import View
 from render_view.render_view import RenderView
 from util.observable_list import ObservableList
+import shaders
 
 class PlatformGLFW(Platform):
     def init(self):
@@ -34,6 +34,8 @@ class PlatformGLFW(Platform):
         glfw.set_window_size_callback(self.window, self.window_size_callback)
         glfw.set_cursor_pos_callback(self.window, self.cursor_pos_callback)
         glfw.set_scroll_callback(self.window, self.scroll_callback)
+
+        shaders.init_shaders()
 
         self.app = QApplication(sys.argv)
         self.ui = ControlUI(self.view, self.render_views)
@@ -135,7 +137,7 @@ class ControlUI(QWidget):
             self.render_view_list.setItemWidget(item, render_view_list_item)
 
     def add_render_view(self):
-        rgb_shader = create_shader_program('color.vs', 'color.fs')
+        rgb_shader = shaders.get_default_shader()
         render_view = RenderView(0, 0, rgb_shader)
         self.render_views.append(render_view)
 
@@ -157,13 +159,22 @@ class RenderViewListItem(QWidget):
         self.index = i
 
         self.index_label = QLabel()
+        size_policy = QSizePolicy()
+        size_policy.setHorizontalStretch(0)
+        self.index_label.setSizePolicy(size_policy)
 
         self.attrib_name = QComboBox()
         self.attrib_name.currentTextChanged.connect(self.attrib_name_changed)
 
+        self.shader_combo = QComboBox()
+        self.shader_combo.addItems(shaders.shader_dict.keys())
+        self.shader_combo.setCurrentText(self.render_view.shader.name)
+        self.shader_combo.currentTextChanged.connect(self.shader_changed)
+
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.index_label)
         self.layout.addWidget(self.attrib_name)
+        self.layout.addWidget(self.shader_combo)
 
         self.setLayout(self.layout)
 
@@ -179,3 +190,6 @@ class RenderViewListItem(QWidget):
 
     def attrib_name_changed(self, text):
         self.render_view.attrib = text
+
+    def shader_changed(self, text):
+        self.render_view.shader = shaders.shader_dict[text]

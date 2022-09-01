@@ -1,11 +1,10 @@
 from turtle import width
 from typing import List
-import sys
 import time
 import numpy as np
 from OpenGL.GL import *
 from gl.camera_utils import look_at, perspective_fov
-from gl.utils import create_shader_colormap_program, create_shader_program
+from shaders import create_shader_colormap_program, create_shader_program
 from gl.vector import vec3
 
 from platforms.platform_glfw import PlatformGLFW
@@ -17,7 +16,7 @@ from util.observable_list import ObservableList
 def main():
     init_width = 640
     init_height = 480
-
+    
     view = View()
     view.view_matrix = look_at(vec3(0, 0, -3), vec3(0, 0, 0), vec3(0, -1, 0))
     view.model_matrix = np.eye(4)
@@ -29,8 +28,11 @@ def main():
     platform = PlatformGLFW(view, render_views)
 
     rgb_shader = create_shader_program('color.vs', 'color.fs')
+    rgb_shader.name = 'color'
     normal_shader = create_shader_program('normal_view.vs', 'normal_view.fs')
+    normal_shader.name = 'normal_view'
     viridis_shader = create_shader_colormap_program('viridis')
+    viridis_shader.name = 'colormap_viridis'
     from loader import test_loader
     mesh = test_loader.prepare('tmp/meshCurrent.mat')
     view.mesh = mesh
