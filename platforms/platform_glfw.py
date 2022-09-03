@@ -99,7 +99,7 @@ class ControlUI(QWidget):
 
     def initUI(self):
 
-        self.setGeometry(300, 300, 300, 220)
+        self.setGeometry(300, 300, 420, 420)
         self.setWindowTitle('Main Control')
         # self.setWindowIcon(QIcon('web.png'))
 

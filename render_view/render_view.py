@@ -6,9 +6,9 @@ from OpenGL.GL import *
 from gl.mesh import Mesh
 
 class RenderView:
-    def __init__(self, width, height, shader):
-        self.width = width
-        self.height = height
+    def __init__(self, shader):
+        self.width = 0
+        self.height = 0
         self.shader = shader
         self.image_callback = None
         self.attrib = None
@@ -61,6 +61,9 @@ class RenderView:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
     def generate_fbo_buffer(self):
+        if self.width == 0 or self.height == 0:
+            return
+
         self.fbo_texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self.fbo_texture)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, self.width, self.height, 0, GL_RGB, GL_FLOAT, None)

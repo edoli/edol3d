@@ -1,4 +1,5 @@
 import os
+from typing import List
 from OpenGL.GL import *
 
 shader_dict ={}
@@ -11,6 +12,7 @@ def init_shaders():
             if not name in shader_dict:
                 shader = create_shader_program(f'{name}.vs', f'{name}.fs')
                 shader.name = name
+                shader.uniforms = get_shader_uniforms(shader)
                 shader_dict[name] = shader
 
     for fn in os.listdir('shader/colormap'):
@@ -19,6 +21,7 @@ def init_shaders():
             name = f'colormap_{colormap_name}'
             shader = create_shader_colormap_program(colormap_name)
             shader.name = name
+            shader.uniforms = get_shader_uniforms(shader)
             shader_dict[name] = shader
 
     return shader_dict
@@ -26,6 +29,31 @@ def init_shaders():
 
 def get_default_shader():
     return shader_dict['color']
+
+
+class Uniform():
+    def __init__(self, name, gl_type):
+        self.name = name
+        self.gl_type = gl_type
+
+
+def get_shader_uniforms(shader) -> List[Uniform]:
+
+    count = glGetProgramiv(shader, GL_ACTIVE_UNIFORMS)
+    uniforms: List[Uniform] = []
+
+    for i in range(count):
+        bufsize = 64
+        buf = (GLchar * bufsize)()
+        namesize = GLsizei()
+        size = GLint()
+        kind = GLenum()
+
+        glGetActiveUniform(shader, i, bufsize, namesize, size, kind, buf)
+        name = buf.value.decode('utf-8')
+        uniforms.append(Uniform(name, kind.value))
+        
+    return uniforms
 
 
 def read_file(file):
