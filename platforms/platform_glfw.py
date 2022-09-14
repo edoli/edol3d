@@ -126,6 +126,7 @@ class ControlUI(QWidget):
 
 
     def refresh_render_view_list(self, render_views):
+        current_row = self.render_view_list.currentRow()
         self.render_view_list.clear()
 
         for i, render_view in enumerate(render_views):
@@ -136,9 +137,11 @@ class ControlUI(QWidget):
             self.render_view_list.addItem(item)
             self.render_view_list.setItemWidget(item, render_view_list_item)
 
+        self.render_view_list.setCurrentRow(min(current_row, len(render_views) - 1))
+
     def add_render_view(self):
         rgb_shader = shaders.get_default_shader()
-        render_view = RenderView(0, 0, rgb_shader)
+        render_view = RenderView(rgb_shader)
         self.render_views.append(render_view)
 
     def remove_render_view(self):

@@ -1,9 +1,14 @@
+from enum import Enum
 from typing import List
 import numpy as np
 
 from OpenGL.GL import *
 
 from gl.mesh import Mesh
+
+class DrawType(Enum):
+    MESH = 0
+    ARROW = 0
 
 class RenderView:
     def __init__(self, shader):
@@ -12,6 +17,7 @@ class RenderView:
         self.shader = shader
         self.image_callback = None
         self.attrib = None
+        self.draw_type = DrawType.MESH
 
         self.fbo = glGenFramebuffers(1)
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
