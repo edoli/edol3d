@@ -2,15 +2,16 @@ from turtle import width
 from typing import List
 import time
 import numpy as np
-import shaders
+from gl.arrow_group import ArrowGroup
+import shader_store
 from OpenGL.GL import *
 from gl.camera_utils import look_at, perspective_fov
-from shaders import create_shader_colormap_program, create_shader_program
+from shader_store import create_shader_colormap_program, create_shader_program
 from gl.vector import vec3
 
 from platforms.platform_glfw import PlatformGLFW
 from platforms.view import View
-from render_view.render_view import RenderView
+from render_view.render_view import DrawType, RenderView
 from util.observable_list import ObservableList
 from viewer import show_viewer
 
@@ -22,11 +23,11 @@ def main():
     render_views: List[RenderView] = ObservableList()
     platform = PlatformGLFW(view, render_views)
 
-    rgb_shader = shaders.shader_dict['color']
-    normal_view_shader = shaders.shader_dict['normal_view']
-    viridis_shader = shaders.shader_dict['colormap_viridis']
+    rgb_shader = shader_store.shader_dict['color']
+    normal_view_shader = shader_store.shader_dict['normal_view']
+    viridis_shader = shader_store.shader_dict['colormap_viridis']
 
-    shaders.get_shader_uniforms(rgb_shader)
+    shader_store.get_shader_uniforms(rgb_shader)
 
     from loader import test_loader
     mesh = test_loader.prepare('tmp/meshCurrent.mat')
@@ -34,8 +35,9 @@ def main():
 
     render_view1 = RenderView(rgb_shader)
     render_view1.attrib = 'rho'
-    render_view2 = RenderView(normal_view_shader)
+    render_view2 = RenderView(shader_store.shader_dict['arrow_group'])
     render_view2.attrib = 'normal'
+    render_view2.draw_type = DrawType.ARROW
     render_view3 = RenderView(viridis_shader)
     render_view3.attrib = 'm1'
     render_view4 = RenderView(viridis_shader)

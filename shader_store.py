@@ -4,6 +4,31 @@ from OpenGL.GL import *
 
 shader_dict ={}
 
+
+arrow_vertex_shader_code = '''
+#version 330
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 value;
+
+uniform mat4 u_mvp;
+
+void main()
+{
+    gl_Position = u_mvp * vec4(position, 1.0);
+}
+'''
+arrow_fragment_shader_code = '''
+#version 330
+out vec4 FragColor;
+uniform vec3 color;
+
+void main()
+{
+    FragColor = vec4(color, 1.0f);
+}
+'''
+
+
 def init_shaders():
 
     for fn in os.listdir('shader'):
@@ -23,6 +48,15 @@ def init_shaders():
             shader.name = name
             shader.uniforms = get_shader_uniforms(shader)
             shader_dict[name] = shader
+
+    shader = OpenGL.GL.shaders.compileProgram(
+            OpenGL.GL.shaders.compileShader(arrow_vertex_shader_code, GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(arrow_fragment_shader_code, GL_FRAGMENT_SHADER))
+    name = 'arrow_group'
+    shader.name = name
+    shader.uniforms = get_shader_uniforms(shader)
+    shader_dict[name] = shader
+        
 
     return shader_dict
             

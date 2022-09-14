@@ -12,7 +12,7 @@ from platforms.platform import Platform
 from platforms.view import View
 from render_view.render_view import RenderView
 from util.observable_list import ObservableList
-import shaders
+import shader_store
 
 class PlatformGLFW(Platform):
     def init(self):
@@ -35,7 +35,7 @@ class PlatformGLFW(Platform):
         glfw.set_cursor_pos_callback(self.window, self.cursor_pos_callback)
         glfw.set_scroll_callback(self.window, self.scroll_callback)
 
-        shaders.init_shaders()
+        shader_store.init_shaders()
 
         self.app = QApplication(sys.argv)
         self.ui = ControlUI(self.view, self.render_views)
@@ -140,7 +140,7 @@ class ControlUI(QWidget):
         self.render_view_list.setCurrentRow(min(current_row, len(render_views) - 1))
 
     def add_render_view(self):
-        rgb_shader = shaders.get_default_shader()
+        rgb_shader = shader_store.get_default_shader()
         render_view = RenderView(rgb_shader)
         self.render_views.append(render_view)
 
@@ -170,7 +170,7 @@ class RenderViewListItem(QWidget):
         self.attrib_name.currentTextChanged.connect(self.attrib_name_changed)
 
         self.shader_combo = QComboBox()
-        self.shader_combo.addItems(shaders.shader_dict.keys())
+        self.shader_combo.addItems(shader_store.shader_dict.keys())
         self.shader_combo.setCurrentText(self.render_view.shader.name)
         self.shader_combo.currentTextChanged.connect(self.shader_changed)
 
@@ -195,4 +195,4 @@ class RenderViewListItem(QWidget):
         self.render_view.attrib = text
 
     def shader_changed(self, text):
-        self.render_view.shader = shaders.shader_dict[text]
+        self.render_view.shader = shader_store.shader_dict[text]

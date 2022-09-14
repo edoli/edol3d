@@ -3,12 +3,13 @@ from typing import List
 import numpy as np
 
 from OpenGL.GL import *
+from gl.arrow_group import ArrowGroup
 
 from gl.mesh import Mesh
 
 class DrawType(Enum):
     MESH = 0
-    ARROW = 0
+    ARROW = 1
 
 class RenderView:
     def __init__(self, shader):
@@ -37,17 +38,35 @@ class RenderView:
             if not mesh.is_visible and self.attrib is None:
                 continue
             
-            mesh.bind_shader(self.shader, self.attrib)
+            
+            if self.draw_type == DrawType.MESH:
+                mesh.bind_shader(self.shader, self.attrib)
 
-            for i, texture in enumerate(mesh.textures):
-                if texture is not None:
-                    glActiveTexture(GL_TEXTURE0 + i)
-                    glBindTexture(texture.target, texture.texture)
+                for i, texture in enumerate(mesh.textures):
+                    if texture is not None:
+                        glActiveTexture(GL_TEXTURE0 + i)
+                        glBindTexture(texture.target, texture.texture)
 
-            glBindVertexArray(mesh.vao)
-            glDrawElements(GL_TRIANGLES, mesh.faces_size, mesh.face_type, None)
+                glBindVertexArray(mesh.vao)
+                glDrawElements(GL_TRIANGLES, mesh.faces_size, mesh.face_type, None)
 
-            glBindVertexArray(0)
+                glBindVertexArray(0)
+
+            elif self.draw_type == DrawType.ARROW:
+                glUniform3fv(glGetUniformLocation(self.shader, 'color'), 1, np.array([1.0, 1.0, 1.0]))
+
+                vertex_attribs = mesh.data.vertex_attribs
+                data = vertex_attribs[self.attrib]
+                if not mesh.has_attrib(self.attrib) or data.shape[1] != 3:
+                    continue
+                
+                if not hasattr(mesh, 'arrow_group'):
+                    mesh.arrow_group = ArrowGroup(mesh.vertices[::1000, :], data[::1000, :] / 25)
+
+                glBindVertexArray(mesh.arrow_group.vao)
+                glDrawArrays(GL_LINES, 0, mesh.arrow_group.vertex_count)
+
+                glBindVertexArray(0)
 
         if self.image_callback is not None:
             img_data = glReadPixels(0, 0, self.width, self.height, GL_RGB, GL_FLOAT)

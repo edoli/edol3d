@@ -42,13 +42,15 @@ def show_viewer(platform: Platform):
             col = i % num_column
             row = i // num_column
 
-            glUseProgram(render_view.shader)
+            shader = render_view.shader
 
-            glUniformMatrix4fv(glGetUniformLocation(render_view.shader, 'u_project'), 1, GL_TRUE, project_matrix)
-            glUniformMatrix4fv(glGetUniformLocation(render_view.shader, 'u_view'), 1, GL_TRUE, view.view_matrix)
-            glUniformMatrix4fv(glGetUniformLocation(render_view.shader, 'u_model'), 1, GL_TRUE, view.model_matrix)
-            glUniformMatrix4fv(glGetUniformLocation(render_view.shader, 'u_mvp'), 1, GL_TRUE, mvp_matrix)
-            glUniformMatrix3fv(glGetUniformLocation(render_view.shader, 'u_mvp_normal'), 1, GL_TRUE, mvp_normal_matrix)
+            glUseProgram(shader)
+
+            glUniformMatrix4fv(glGetUniformLocation(shader, 'u_project'), 1, GL_TRUE, project_matrix)
+            glUniformMatrix4fv(glGetUniformLocation(shader, 'u_view'), 1, GL_TRUE, view.view_matrix)
+            glUniformMatrix4fv(glGetUniformLocation(shader, 'u_model'), 1, GL_TRUE, view.model_matrix)
+            glUniformMatrix4fv(glGetUniformLocation(shader, 'u_mvp'), 1, GL_TRUE, mvp_matrix)
+            glUniformMatrix3fv(glGetUniformLocation(shader, 'u_mvp_normal'), 1, GL_TRUE, mvp_normal_matrix)
 
             render_view.resize(cell_width, cell_height)
             render_view.draw([view.mesh])
