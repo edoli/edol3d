@@ -140,7 +140,7 @@ class ControlUI(QWidget):
         self.render_view_list.setCurrentRow(min(current_row, len(render_views) - 1))
 
     def add_render_view(self):
-        rgb_shader = shader_store.get_default_shader()
+        rgb_shader = shader_store.visualizer_shaders['color']
         render_view = RenderView(rgb_shader)
         self.render_views.append(render_view)
 
@@ -169,8 +169,11 @@ class RenderViewListItem(QWidget):
         self.attrib_name = QComboBox()
         self.attrib_name.currentTextChanged.connect(self.attrib_name_changed)
 
+        self.attrib_name_arrow = QComboBox()
+        self.attrib_name_arrow.currentTextChanged.connect(self.attrib_name_arrow_changed)
+
         self.shader_combo = QComboBox()
-        self.shader_combo.addItems(shader_store.shader_dict.keys())
+        self.shader_combo.addItems(shader_store.visualizer_shaders.keys())
         self.shader_combo.setCurrentText(self.render_view.shader.name)
         self.shader_combo.currentTextChanged.connect(self.shader_changed)
 
@@ -178,6 +181,7 @@ class RenderViewListItem(QWidget):
         self.layout.addWidget(self.index_label)
         self.layout.addWidget(self.attrib_name)
         self.layout.addWidget(self.shader_combo)
+        self.layout.addWidget(self.attrib_name_arrow)
 
         self.setLayout(self.layout)
 
@@ -190,9 +194,15 @@ class RenderViewListItem(QWidget):
         self.attrib_name.clear()
         self.attrib_name.addItems(self.view.mesh.data.vertex_attribs)
         self.attrib_name.setCurrentText(name)
+        
+        self.attrib_name_arrow.clear()
+        self.attrib_name_arrow.addItems(self.view.mesh.data.vertex_attribs)
 
     def attrib_name_changed(self, text):
         self.render_view.attrib = text
 
+    def attrib_name_arrow_changed(self, text):
+        pass
+
     def shader_changed(self, text):
-        self.render_view.shader = shader_store.shader_dict[text]
+        self.render_view.shader = shader_store.visualizer_shaders[text]

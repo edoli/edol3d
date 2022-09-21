@@ -12,7 +12,7 @@ class Texture():
 
 
 class MeshData():
-    def __init__(self, vertices: np.ndarray, faces: np.ndarray, vertex_attribs=None, face_attribs=None):
+    def __init__(self, vertices: np.ndarray, faces: np.ndarray, vertex_attribs={}, face_attribs={}):
         self.vertices = vertices
         self.faces = faces
         self.vertex_attribs = vertex_attribs
@@ -64,11 +64,14 @@ class Mesh():
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.nbytes, faces, GL_STATIC_DRAW)
 
+        # Default vertex attribs
         vertex_attribs = self.data.vertex_attribs
+        vertex_attribs['x'] = vertices[:, 0]
+        vertex_attribs['y'] = vertices[:, 1]
+        vertex_attribs['z'] = vertices[:, 2]
 
-        if vertex_attribs is not None:
-            for key in vertex_attribs:
-                self.bind_data(key, vertex_attribs[key])
+        for key in vertex_attribs:
+            self.bind_data(key, vertex_attribs[key])
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
@@ -133,7 +136,7 @@ class Mesh():
                 glVertexAttribPointer(gl_location, data_size, GL_FLOAT, GL_FALSE,
                                     data.dtype.itemsize * data_size, ctypes.c_void_p(0))
             else:
-                print('GL attrib not exists: ', name)
+                print('GL attrib not exists: value')
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)

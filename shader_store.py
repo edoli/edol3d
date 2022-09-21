@@ -1,44 +1,20 @@
 import os
-from typing import List
+from typing import List, TypeVar
 from OpenGL.GL import *
 
-shader_dict ={}
-
-
-arrow_vertex_shader_code = '''
-#version 330
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 value;
-
-uniform mat4 u_mvp;
-
-void main()
-{
-    gl_Position = u_mvp * vec4(position, 1.0);
-}
-'''
-arrow_fragment_shader_code = '''
-#version 330
-out vec4 FragColor;
-uniform vec3 color;
-
-void main()
-{
-    FragColor = vec4(color, 1.0f);
-}
-'''
-
+visualizer_shaders = {}
+builtin_shaders = {}
 
 def init_shaders():
 
-    for fn in os.listdir('shader'):
-        if fn[-3:] == '.vs' and os.path.exists(os.path.join('shader', fn[:-3] + '.fs')):
+    for fn in os.listdir('shader/visualizer'):
+        if fn[-3:] == '.vs' and os.path.exists(os.path.join('shader', 'visualizer', fn[:-3] + '.fs')):
             name = fn[:-3]
-            if not name in shader_dict:
-                shader = create_shader_program(f'{name}.vs', f'{name}.fs')
+            if not name in visualizer_shaders:
+                shader = create_shader_program(f'visualizer/{name}.vs', f'visualizer/{name}.fs')
                 shader.name = name
                 shader.uniforms = get_shader_uniforms(shader)
-                shader_dict[name] = shader
+                visualizer_shaders[name] = shader
 
     for fn in os.listdir('shader/colormap'):
         if fn[-5:] == '.glsl':
@@ -47,22 +23,13 @@ def init_shaders():
             shader = create_shader_colormap_program(colormap_name)
             shader.name = name
             shader.uniforms = get_shader_uniforms(shader)
-            shader_dict[name] = shader
+            visualizer_shaders[name] = shader
 
-    shader = OpenGL.GL.shaders.compileProgram(
-            OpenGL.GL.shaders.compileShader(arrow_vertex_shader_code, GL_VERTEX_SHADER),
-            OpenGL.GL.shaders.compileShader(arrow_fragment_shader_code, GL_FRAGMENT_SHADER))
+    shader = create_shader_program('builtin/arrow_group.vs', 'builtin/arrow_group.fs')
     name = 'arrow_group'
     shader.name = name
     shader.uniforms = get_shader_uniforms(shader)
-    shader_dict[name] = shader
-        
-
-    return shader_dict
-            
-
-def get_default_shader():
-    return shader_dict['color']
+    builtin_shaders[name] = shader
 
 
 class Uniform():
@@ -210,7 +177,7 @@ void main()
 	vColor = vec4({name}_colormap(value), 1.0);
 }}
     '''
-    f_shader_code = read_file(os.path.join('shader', 'color.fs'))
+    f_shader_code = read_file(os.path.join('shader', 'builtin', 'color.fs'))
     return OpenGL.GL.shaders.compileProgram(
             OpenGL.GL.shaders.compileShader(v_shader_code, GL_VERTEX_SHADER),
             OpenGL.GL.shaders.compileShader(f_shader_code, GL_FRAGMENT_SHADER))

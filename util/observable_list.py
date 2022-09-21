@@ -1,4 +1,4 @@
-from typing import Callable, List, TypeVar
+from typing import List, TypeVar
 from rx.subject.behaviorsubject import BehaviorSubject
 from rx.core import typing
 

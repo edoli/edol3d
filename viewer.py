@@ -4,6 +4,7 @@ from platforms.platform import Platform
 
 import numpy as np
 import time
+import shader_store
 from OpenGL.GL import *
 
 
@@ -37,6 +38,11 @@ def show_viewer(platform: Platform):
         project_matrix = perspective_fov(np.pi / 4, cell_width / cell_height, 0.01, 100)
         mvp_matrix = project_matrix @ view.view_matrix @ view.model_matrix
         mvp_normal_matrix = view.view_matrix[:3, :3] @ np.linalg.inv(view.model_matrix).T[:3, :3]
+
+        # built-in shaders
+        shader_arrow_group = shader_store.builtin_shaders['arrow_group']
+        glUseProgram(shader_arrow_group)
+        glUniformMatrix4fv(glGetUniformLocation(shader_arrow_group, 'u_mvp'), 1, GL_TRUE, mvp_matrix)
 
         for i, render_view in enumerate(render_views):
             col = i % num_column

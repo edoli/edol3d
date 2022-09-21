@@ -6,10 +6,8 @@ from OpenGL.GL import *
 from gl.arrow_group import ArrowGroup
 
 from gl.mesh import Mesh
+import shader_store
 
-class DrawType(Enum):
-    MESH = 0
-    ARROW = 1
 
 class RenderView:
     def __init__(self, shader):
@@ -18,7 +16,8 @@ class RenderView:
         self.shader = shader
         self.image_callback = None
         self.attrib = None
-        self.draw_type = DrawType.MESH
+        self.draw_mesh = True
+        self.draw_arrow = False
 
         self.fbo = glGenFramebuffers(1)
         glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
@@ -32,14 +31,13 @@ class RenderView:
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        glUseProgram(self.shader)
 
         for mesh in meshes:
             if not mesh.is_visible and self.attrib is None:
                 continue
             
-            
-            if self.draw_type == DrawType.MESH:
+            if self.draw_mesh:
+                glUseProgram(self.shader)
                 mesh.bind_shader(self.shader, self.attrib)
 
                 for i, texture in enumerate(mesh.textures):
@@ -52,8 +50,11 @@ class RenderView:
 
                 glBindVertexArray(0)
 
-            elif self.draw_type == DrawType.ARROW:
-                glUniform3fv(glGetUniformLocation(self.shader, 'color'), 1, np.array([1.0, 1.0, 1.0]))
+            if self.draw_arrow:
+                arrow_group_shader = shader_store.builtin_shaders['arrow_group']
+
+                glUseProgram(arrow_group_shader)
+                glUniform3fv(glGetUniformLocation(arrow_group_shader, 'color'), 1, np.array([1.0, 1.0, 1.0]))
 
                 vertex_attribs = mesh.data.vertex_attribs
                 data = vertex_attribs[self.attrib]
